@@ -10,6 +10,7 @@ public class TopologyConfig {
     private static final Logger logger = LoggerFactory.getLogger(TopologyConfig.class);
     private Boolean isLocal;
     private Integer localExecutionTime;
+    private String floodlightUrl;
 
     private Integer parallelism;
     private Integer workers;
@@ -62,6 +63,7 @@ public class TopologyConfig {
         this.config = config;
         isLocal = config.getBoolean("cli.local");
         localExecutionTime = (int)(config.getFloat("local.execution.time") * 1000);
+        floodlightUrl = config.getString("floodlight.endpoint.url");
 
         parallelism = config.getInteger("parallelism");
         workers = config.getInteger("workers");
@@ -113,6 +115,10 @@ public class TopologyConfig {
 
     public Integer getLocalExecutionTime() {
         return localExecutionTime;
+    }
+
+    public String getFloodlightUrl() {
+        return floodlightUrl;
     }
 
     public Integer getParallelism() {

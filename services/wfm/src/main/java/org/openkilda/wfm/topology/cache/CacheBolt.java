@@ -27,6 +27,7 @@ import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+import org.glassfish.jersey.client.ClientConfig;
 import org.openkilda.messaging.BaseMessage;
 import org.openkilda.messaging.Destination;
 import org.openkilda.messaging.Message;
@@ -41,6 +42,7 @@ import org.openkilda.messaging.ctrl.state.CacheBoltState;
 import org.openkilda.messaging.ctrl.state.FlowDump;
 import org.openkilda.messaging.ctrl.state.NetworkDump;
 import org.openkilda.messaging.error.CacheException;
+import org.openkilda.messaging.floodlight.flow.FlowItem;
 import org.openkilda.messaging.info.InfoData;
 import org.openkilda.messaging.info.InfoMessage;
 import org.openkilda.messaging.info.discovery.NetworkInfoData;
@@ -66,11 +68,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 
 public class CacheBolt
         extends AbstractTickStatefulBolt<InMemoryKeyValueState<String, Cache>>
@@ -123,18 +128,26 @@ public class CacheBolt
     private final int discoveryInterval;
 
     /**
+     * Initialization flag
+     */
+    private boolean isReceivedCacheInfo = false;
+
+    /**
+     * Full floodlight url for getting flows of the switch.
+     */
+    private final String floodlightUrl;
+
+    private static final Client CLIENT = ClientBuilder.newClient(new ClientConfig());
+
+    /**
      * Instance constructor.
      *
      * @param discoveryInterval discovery interval
      */
-    CacheBolt(int discoveryInterval) {
+    CacheBolt(int discoveryInterval, String floodlightUrl) {
         this.discoveryInterval = discoveryInterval;
+        this.floodlightUrl = floodlightUrl + "/wm/core/switch/%s/flow/json";
     }
-
-    /**
-     * Initialization flag
-     */
-    private boolean isReceivedCacheInfo = false;
 
     /**
      * {@inheritDoc}
@@ -500,6 +513,7 @@ public class CacheBolt
             networkCache.updateSwitch(sw);
         } else {
             networkCache.createSwitch(sw);
+            processExistingFlows(sw.getSwitchId());
         }
 
     }
@@ -564,6 +578,23 @@ public class CacheBolt
                 logger.error("Error during serializing PortInfoData", e);
             }
         });
+    }
+
+    private void processExistingFlows(String switchId) {
+        String result = CLIENT.target(String.format(floodlightUrl, switchId))
+                .request()
+                .get(String.class);
+
+        logger.info("Received existing flows of switch {}: {}", switchId, result);
+
+        List<FlowItem> flows;
+        try {
+            flows = Arrays.asList(Utils.MAPPER.readValue(result, FlowItem[].class));
+        } catch (IOException e) {
+            logger.error("Error during deserialization", e);
+        }
+
+        //todo: processing flows
     }
 
     @Override
