@@ -236,12 +236,12 @@ public class SwitchManager implements IFloodlightModule, IFloodlightService, ISw
      */
     @Override
     public void installDefaultRules(final DatapathId dpid) throws SwitchOperationException {
-        installDropFlow(dpid);
         installVerificationRule(dpid, true);
         IOFSwitch sw = lookupSwitch(dpid);
         if (sw.getOFFactory().getVersion().compareTo(OF_12) > 0) {
             logger.debug("installing unicast verification match for {}", dpid.toString());
             installVerificationRule(dpid, false);
+            installDropFlow(dpid);
         } else {
             logger.debug("not installing unicast verification match for {}", dpid.toString());
         }
@@ -846,7 +846,7 @@ public class SwitchManager implements IFloodlightModule, IFloodlightService, ISw
             dstMac = dpidToMac(sw);
         }
         Match.Builder mb = sw.getOFFactory().buildMatch();
-        mb.setExact(MatchField.ETH_DST, dstMac);
+        mb.setMasked(MatchField.ETH_DST, dstMac, MacAddress.NO_MASK);
         return mb.build();
     }
 
