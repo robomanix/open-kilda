@@ -311,16 +311,16 @@ class MessageItem(object):
             #
             isl_create_or_update = (
                 "MERGE "
-                "(src:switch {{name:'{}'}}) "
-                "ON CREATE SET src.state = 'inactive' "
+                "(s_sw:switch {{name:'{}'}}) "
+                "ON CREATE SET s_sw.state = 'inactive' "
                 "MERGE "
-                "(dst:switch {{name:'{}'}}) "
-                "ON CREATE SET dst.state = 'inactive' "
+                "(d_sw:switch {{name:'{}'}}) "
+                "ON CREATE SET d_sw.state = 'inactive' "
                 "MERGE "
-                "(src)-[i:isl {{"
+                "(src:switch {{name:'{}'}})-[i:isl {{"
                 "src_switch: '{}', src_port: {}, "
                 "dst_switch: '{}', dst_port: {} "
-                "}}]->(dst) "
+                "}}]->(dst:switch {{name:'{}'}}) "
                 "SET "
                 "i.latency = {}, "
                 "i.speed = {}, "
@@ -329,8 +329,10 @@ class MessageItem(object):
             ).format(
                 a_switch,
                 b_switch,
+                a_switch,
                 a_switch, a_port,
                 b_switch, b_port,
+                b_switch,
                 latency,
                 speed,
                 available_bandwidth

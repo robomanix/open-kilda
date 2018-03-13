@@ -123,14 +123,14 @@ def merge_flow_relationship(flow_data, tx=None):
     """
     query = (
         "MERGE "                                # MERGE .. create if doesn't exist .. being cautious
-        " (src:switch {{name:'{src_switch}'}}) "
-        " ON CREATE SET src.state = 'inactive' "
+        " (s_sw:switch {{name:'{src_switch}'}}) "
+        " ON CREATE SET s_sw.state = 'inactive' "
         "MERGE "
-        " (dst:switch {{name:'{dst_switch}'}}) "
-        " ON CREATE SET dst.state = 'inactive' "
-        "MERGE (src)-[f:flow {{"                # Should only use the relationship primary keys in a match
+        " (d_sw:switch {{name:'{dst_switch}'}}) "
+        " ON CREATE SET d_sw.state = 'inactive' "
+        "MERGE (src:switch {{name:'{src_switch}'}})-[f:flow {{"                # Should only use the relationship primary keys in a match
         " flowid:'{flowid}', "
-        " cookie: {cookie} }} ]->(dst)  "
+        " cookie: {cookie} }} ]->(dst:switch {{name:'{dst_switch}'}})  "
         "SET "
         " f.meter_id = {meter_id}, "
         " f.bandwidth = {bandwidth}, "
@@ -166,13 +166,13 @@ def merge_flow_segments(_flow, tx=None):
     flow = copy.deepcopy(_flow)
     create_segment_query = (
         "MERGE "                                # MERGE .. create if doesn't exist .. being cautious
-        "(src:switch {{name:'{src_switch}'}}) "
-        "ON CREATE SET src.state = 'inactive' "
+        "(s_sw:switch {{name:'{src_switch}'}}) "
+        "ON CREATE SET s_sw.state = 'inactive' "
         "MERGE "
-        "(dst:switch {{name:'{dst_switch}'}}) "
-        "ON CREATE SET dst.state = 'inactive' "
+        "(d_sw:switch {{name:'{dst_switch}'}}) "
+        "ON CREATE SET d_sw.state = 'inactive' "
         "MERGE "
-        "(src)-[fs:flow_segment {{flowid: '{flowid}', parent_cookie: {parent_cookie} }}]->(dst) "
+        "(src:switch {{name:'{src_switch}'}})-[fs:flow_segment {{flowid: '{flowid}', parent_cookie: {parent_cookie} }}]->(dst:switch {{name:'{dst_switch}'}}) "
         "SET "
         "fs.cookie = {cookie}, "
         "fs.src_switch = '{src_switch}', "
