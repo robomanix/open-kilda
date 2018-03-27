@@ -607,6 +607,10 @@ class MessageItem(object):
             isls = []
             for link in result:
                 # link = data['r']
+
+                if link['status'] != "active":
+                    continue
+
                 isl = {
                     'id': str(
                         link['src_switch'] + '_' + str(link['src_port'])),
