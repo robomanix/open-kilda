@@ -77,7 +77,9 @@ public class ServiceConfig {
 
     @Bean(name = "traffExamRestTemplate")
     public RestTemplate traffExamRestTemplate() {
-        return new RestTemplate();
+        final RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setErrorHandler(buildErrorHandler());
+        return restTemplate;
     }
 
     private RestTemplate buildRestTemplateWithAuth(String endpoint, String username, String password) {
